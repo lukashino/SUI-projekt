@@ -4,6 +4,7 @@ from subprocess import Popen
 import tempfile
 import numpy as np
 import random
+from datetime import datetime
 
 from dicewars.server.game.summary import GameSummary
 
@@ -58,9 +59,15 @@ def get_nickname(ai_spec):
 
 def log_file_producer(logdir, process):
     if logdir is None:
-        return open(os.devnull, 'w')
+        f = open(os.devnull, 'a+')
     else:
-        return open('{}/{}'.format(logdir, process), 'w')
+        f = open('{}/{}'.format(logdir, process), 'a+')
+
+    now = datetime.now()
+    current_time = now.strftime("%H:%M:%S")
+    f.write("========================== {} ==========================\n".format(current_time))
+
+    return f
 
 
 def run_ai_only_game(
