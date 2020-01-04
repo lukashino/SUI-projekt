@@ -26,7 +26,7 @@ class AI:
         self.playersCount = self.board.nb_players_alive()
 
         best_turn = self.best_turn()
-        return BattleCommand(area_name, best_turn) if best_turn is not None else EndTurnCommand()
+        return BattleCommand(best_turn[0], best_turn[1]) if best_turn is not None else EndTurnCommand()
 
     def updateBoardAttack(self, board, source, target):
         sourceName = source.get_name()
@@ -44,7 +44,8 @@ class AI:
         return newBoard
 
     def best_turn(self):
-        best = 0.0
+        best = -1.0
+        best_area_name = None
         target_name = None
 
         for source, target in possible_attacks(self.board, self.player_name):
@@ -56,9 +57,13 @@ class AI:
             new_value = self.expectiMax(newBoard, target)
             if new_value > best:
                 best = new_value
+                best_area_name = area_name
                 target_name = target.get_name()
 
-        return target_name
+        if best != -1.0:
+            return best_area_name, target_name
+        else:
+            return None
 
     def expectiMax(self, board, area):
         atk_power = area.get_dice()
