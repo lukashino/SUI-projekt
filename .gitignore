@@ -1,1 +1,6 @@
 __pycache__/
+*.log
+*.out
+*.pickle
+*.save
+server.txt
