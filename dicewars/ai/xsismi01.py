@@ -19,6 +19,7 @@ class AI:
         """
         self.player_name = player_name
         self.logger = logging.getLogger('AI')
+        # logging.critical(players_order)
 
     def ai_turn(self, board, nb_moves_this_turn, nb_turns_this_game, time_left):
         """AI agent's turn
@@ -27,18 +28,35 @@ class AI:
         highest estimated hold probability. If there is no such move, the agent
         ends it's turn.
         """
-        self.logger.debug("Looking for possible turns.")
         self.board = board
-        turns = self.best_turn()
+        self.playersCount = self.board.nb_players_alive()
 
-        if turns:
-            turn = turns[0]
-            area_name = turn[0]
-            self.logger.debug("Possible turn: {}".format(turn))
-            hold_prob = turn[2]
-            self.logger.debug("{0}->{1} attack and hold probabiliy {2}".format(area_name, turn[1], hold_prob))
+        turns = []
+        if (time_left < 1.5):
+            # panic mode, no time
+            attacks = []
+            for source, target in possible_attacks(board, self.player_name):
+                area_dice = source.get_dice()
+                strength_difference = area_dice - target.get_dice()
+                attack = [source.get_name(), target.get_name(), strength_difference]
+                attacks.append(attack)
 
-            return BattleCommand(area_name, turn[1])
+            attacks = sorted(attacks, key=lambda attack: attack[2], reverse=True)
+
+            if attacks and attacks[0][2] >= 0:
+                return BattleCommand(attacks[0][0], attacks[0][1])
+
+        else:
+            turns = self.best_turn()
+
+            if turns:
+                turn = turns[0]
+                area_name = turn[0]
+                self.logger.debug("Possible turn: {}".format(turn))
+                hold_prob = turn[2]
+                self.logger.debug("{0}->{1} attack and hold probabiliy {2}".format(area_name, turn[1], hold_prob))
+
+                return BattleCommand(area_name, turn[1])
 
         self.logger.debug("No more plays.")
         return EndTurnCommand()
@@ -94,14 +112,12 @@ class AI:
 
         for source, target in self.possible_attacks_from_area(board, area, self.player_name): 
             atk_power = source.get_dice()
-            if atk_power < 2:
-                continue
 
             attack_possibility_value = attack_succcess_probability(source.get_dice(), target.get_dice())
             if attack_possibility_value >= 0.2 or atk_power == 8:
                 newBoard = self.updateBoardAttack(board, source, target) # ze sme zautocili a vyhrali
                 areaAttacked = newBoard.get_area(target.get_name()) # areaAttacked bude mat get_dice() - 1 kociek
-                val = attack_possibility_value * self.expectiMin(newBoard, areaAttacked) * areaAttacked.get_dice() 
+                val = attack_possibility_value * self.expectiMin(newBoard, areaAttacked, self.playersCount) * areaAttacked.get_dice() 
                 values.append(val)
 
         if not values:
@@ -109,7 +125,7 @@ class AI:
         
         return max(values)
 
-    def expectiMin(self, board, area):
+    def expectiMin(self, board, area, expectiMinLayers):
         values = []
         for adj in area.get_adjacent_areas():
             adjacent_area = board.get_area(adj)
@@ -118,10 +134,16 @@ class AI:
                 if enemy_dice == 1:
                     continue
                 lose_prob = attack_succcess_probability(enemy_dice, area.get_dice())
-                if lose_prob >= 0.2 or area.get_dice() == 8:        
+                if lose_prob <= 0.25 or area.get_dice() == 8:        # tu ma byt snad lose_prob <= 0.2 nieeeee? ze je to 80% sanca ze oni prehraju
                     newBoard = self.updateBoardDefence(board, area, adjacent_area) # ze na nas zautocili a vyhrali sme a s area nic nestane, oni budu mat get_dice() == 1
                     areaThatAttacked = newBoard.get_area(adjacent_area.get_name()) # areaAttacked bude mat get_dice() == 1 kocku
-                    val = (1 - lose_prob) * self.expectiMax(newBoard, areaThatAttacked) * areaThatAttacked.get_dice() 
+                    expectiVal = 0
+                    if expectiMinLayers == 0:
+                        expectiVal = self.expectiMax(newBoard, areaThatAttacked) 
+                    else: 
+                        expectiVal = self.expectiMin(newBoard, areaThatAttacked, expectiMinLayers - 1)
+
+                    val = (1 - lose_prob) * expectiVal * areaThatAttacked.get_dice() 
                     values.append(val)
 
         if not values:
