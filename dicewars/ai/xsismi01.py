@@ -24,6 +24,9 @@ class AI:
         """
         AI agent's turn
         """
+        if time_left < 0.3:
+            return EndTurnCommand()            
+
         self.board = board
         self.playersCount = self.board.nb_players_alive()
 
@@ -178,7 +181,7 @@ class AI:
             if not adjacent_area.can_attack():
                 continue
             lose_prob = attack_succcess_probability(enemy_dice, area_dice)
-            if lose_prob <= THRESHOLD:        # tu ma byt snad lose_prob <= 0.2 nieeeee? ze je to 80% sanca ze oni prehraju
+            if lose_prob <= THRESHOLD: 
                 newBoard = self.updateBoardDefence(board, area, adjacent_area) # ze na nas zautocili a vyhrali sme a s area nic nestane, oni budu mat get_dice() == 1
                 areaThatAttacked = newBoard.get_area(adjacent_area.get_name()) # areaAttacked bude mat get_dice() == 1 kocku
                 if expectiMinLayers == 0:
