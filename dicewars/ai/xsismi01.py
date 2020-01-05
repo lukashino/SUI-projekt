@@ -85,16 +85,19 @@ class AI:
             if not adjacent_area.can_attack():
                 continue
             lose_prob = attack_succcess_probability(enemy_dice, area_dice)
-            if lose_prob <= THRESHOLD or area_dice == 8:        # tu ma byt snad lose_prob <= 0.2 nieeeee? ze je to 80% sanca ze oni prehraju
+            if lose_prob <= THRESHOLD:        # tu ma byt snad lose_prob <= 0.2 nieeeee? ze je to 80% sanca ze oni prehraju
                 newBoard = self.updateBoardDefence(board, area, adjacent_area) # ze na nas zautocili a vyhrali sme a s area nic nestane, oni budu mat get_dice() == 1
                 areaThatAttacked = newBoard.get_area(adjacent_area.get_name()) # areaAttacked bude mat get_dice() == 1 kocku
                 if expectiMinLayers == 0:
-                    expectiVal = self.expectiMax(newBoard, areaThatAttacked)[1]
+                    expectiVal = self.expectiMax(newBoard, area)[1]
                 else: 
-                    expectiVal = self.expectiMin(newBoard, areaThatAttacked, expectiMinLayers - 1)
+                    expectiVal = self.expectiMin(newBoard, area, expectiMinLayers - 1)
 
                 val = (1 - lose_prob) * expectiVal * areaThatAttacked.get_dice() 
                 values.append(val)
+            else:
+                # predpokladam, ze sme bitku prehrali, zobrali nam ho
+                values.append(0.0001)
         
         return min(values) if values else 1.0
 
