@@ -5,7 +5,7 @@ from dicewars.ai.utils import probability_of_holding_area, probability_of_succes
 from dicewars.client.ai_driver import BattleCommand, EndTurnCommand
 import copy
 
-THRESHOLD = 0.2
+THRESHOLD = 0.4
 
 class AI:
     """
