@@ -1,3 +1,4 @@
+import json
 from .area import Area
 from typing import List, Optional
 
@@ -15,6 +16,7 @@ class Board(object):
             Dictionary describing the game's board
         """
         self.areas = {}
+        # print(json.dumps(areas, sort_keys=True, indent=4))
         for area in areas:
             self.areas[area] = Area(area, areas[area]['owner'], areas[area]['dice'],
                                     board[area]['neighbours'], board[area]['hexes'])
